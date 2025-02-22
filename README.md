@@ -7,7 +7,7 @@ Visualizing take count of priority, due state and parent-son relation
 - [x] New Task
 - [ ] Add action selector
   - [ ] Change to X state not only next
-  - [ ] Delete Task --> already got the curl working need to implement
+  - [x] Delete Task
   - [ ] Add Due
   - [ ] Change Prio
   - [ ] Secondary Tasks

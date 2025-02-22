@@ -35,7 +35,7 @@ wofi_cal() {
     echo "$dates" | wofi --height=400 --width=700 --columns=7 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Select due:"
 }
 wofi_status() {
-    status="To Do\nIn Process\nCompleted"
+    status="To Do\nIn Process"
     echo -e "$status" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Select status:"
 }
 wofi_prio() {
@@ -71,9 +71,10 @@ status_task() {
 }
 
 ### DEL TASK
-
-
-curl -v --user "$user:$api_key" -X DELETE URL
+delete_task(){
+    curl -v --user "$user:$api_key" -X DELETE $TASK_URL
+    exit 0
+}
 
 ### NEW TASK
 new_task() {
@@ -135,10 +136,6 @@ N=$(awk -v line=$line_number 'NR<=line { if ($0 ~ /^UID:/) uid=$0 } END { if (ui
 TASK_URL="$base_url$(grep -B5 "$N" "$root/tasks" | grep "<d:href>" | sed -E 's|.*<d:href>(.*)</d:href>.*|\1|')" # Get URL of the .ics for the task
 curl -u "$user:$api_key" -X GET $TASK_URL > $root/mod_task.ics # Get only the task to modify
 
-
 status_task
 
-
-
-
-
+exit 0
