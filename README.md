@@ -6,8 +6,8 @@ Visualizing take count of priority, due state and parent-son relation.
 - [x] New Task
 - [x] Add action selector
   - [x] Delete Task
-  - [x] Add/Change Status
+  - [x] Add/Change Status (To fully check)
   - [ ] Add/Change Due
   - [ ] Add/Change Prio
-  - [ ] Add Secondary Tasks
-- [ ] Clean Code
+  - [x] Add Secondary Tasks
+- [ ] Clean Code (In Process)

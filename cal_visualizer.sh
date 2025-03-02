@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # source var
-source ~/.config/nctasks/.env
+source ~/.config/nctasksp/.env
 ##### !!!!! #####
 # need to assign $user $api_key $base_url $root if not using .env
 cal_url=$base_url/remote.php/dav/calendars/$user/personal
@@ -44,36 +44,54 @@ wofi_prio() {
 }
 
 ### STATUS CHANGER
-status_task() {
-    echo $1
+mod_task() {
     case "$1" in
         walk)
-            PRE_STATUS=$(grep STATUS $root/mod_task.ics | cut -d':' -f2) # Evaluate which status should be set
-            PRE_STATUS=$(echo $PRE_STATUS | tr -d '\r') # Remove carriage return character from PRE_STATUS
-            case "$PRE_STATUS" in # change status
-                NEEDS-ACTION)
-                    STATUS_TO_SET="IN-PROCESS"
-                    ;;
-                IN-PROCESS)
-                    delete_task
-                    ;;
-                *)
-                    STATUS_TO_SET="NEEDS-ACTION"  # Reset
-                    ;;
-            esac
-            sed -i "s/^STATUS:.*/STATUS:$STATUS_TO_SET/" $root/mod_task.ics # Mod the task
-            ;;
-        change)
-            STATUS_TO_SET=$(echo -e "To do\nIn Progress" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Select desired status")
-            if [ "$STATUS_TO_SET" = "To do" ]; then
-                STATUS_TO_SET="NEEDS-ACTION"
-            elif [ "$STATUS_TO_SET" = "In Progress" ]; then
-                STATUS_TO_SET="IN-PROCESS"
-            else
-                echo "Invalid status selected"
-                exit 1
+            python3 $root/mod_task.py walk
+            if [ $? == 4 ]; then
+                delete_task
             fi
-            sed -i "s/^STATUS:.*/STATUS:$STATUS_TO_SET/" $root/mod_task.ics # Mod the task
+            # PRE_STATUS=$(grep STATUS $root/mod_task.ics | cut -d':' -f2) # Evaluate which status should be set
+            # PRE_STATUS=$(echo $PRE_STATUS | tr -d '\r') # Remove carriage return character from PRE_STATUS
+            # case "$PRE_STATUS" in # change status
+            #     NEEDS-ACTION)
+            #         STATUS_TO_SET="IN-PROCESS"
+            #         ;;
+            #     IN-PROCESS)
+            #         delete_task
+            #         ;;
+            #     *)
+            #         STATUS_TO_SET="NEEDS-ACTION"  # Reset
+            #         ;;
+            # esac
+            # sed -i "s/^STATUS:.*/STATUS:$STATUS_TO_SET/" $root/mod_task.ics # Mod the task
+            echo $?
+            ;;
+        status)
+            STATUS_TO_SET=$(echo -e "To do\nIn Progress" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Select desired status")
+            STATUS_TO_SET=$(echo "$STATUS_TO_SET" | tr ' ' '-')
+            python3 $root/mod_task.py status "$STATUS_TO_SET"
+            # if [ "$STATUS_TO_SET" = "To do" ]; then
+            #     STATUS_TO_SET="NEEDS-ACTION"
+            # elif [ "$STATUS_TO_SET" = "In Progress" ]; then
+            #     STATUS_TO_SET="IN-PROCESS"
+            # else
+            #     echo "Invalid status selected"
+            #     exit 1
+            # fi
+            # sed -i "s/^STATUS:.*/STATUS:$STATUS_TO_SET/" $root/mod_task.ics # Mod the task
+            ;;
+        due)
+            DUE_TO_SET=$(wofi_cal)
+            ## da finire
+            # python3 $root/mod_task.py due "$DUE_TO_SET"
+            exit 0
+            ;;
+        prio)
+            PRIO_TO_SET=$(wofi_prio)
+            # python3 $root/mod_task.py prio "$PRIO_TO_SET"
+            ## da finire\
+            exit 0
             ;;
         *)
             echo "Something went wrong" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt ":("
@@ -112,9 +130,12 @@ new_task() {
     if [ -z "$new_task_status" ]; then
         exit 0
     fi
-
     # Generate the new task .ics file and get the unique ID to send it
-    new_task_uid=$(python3 $root/new_task.py "$new_task_sum" "$new_task_due" "$new_task_prio" "$new_task_status")
+    if [ "$1" = "secondary" ]; then
+        new_task_uid=$(python3 $root/new_task.py "$new_task_sum" "$new_task_due" "$new_task_prio" "$new_task_status" "$1" "$N")
+    else
+        new_task_uid=$(python3 $root/new_task.py "$new_task_sum" "$new_task_due" "$new_task_prio" "$new_task_status")
+    fi
     # Send it
     curl -v --user "$user:$api_key" \
     -H "Content-Type: text/calendar" -X PUT \
@@ -126,7 +147,9 @@ new_task() {
 action_selector () {
     # Get UID of selected task
     line_number=$(echo $SELECTED_TASK | sed 's/ [0-9][0-9].*$//' | grep -n -f - $root/tasks | cut -d: -f1) # Find the task from the summary
+    # echo $line_number
     N=$(awk -v line=$line_number 'NR<=line { if ($0 ~ /^UID:/) uid=$0 } END { if (uid) print uid }' $root/tasks | cut -d':' -f2) # Crawl up to find UID and assign to N
+    # echo $N
     ### N è Task UID
     TASK_URL="$base_url$(grep -B5 "$N" "$root/tasks" | grep "<d:href>" | sed -E 's|.*<d:href>(.*)</d:href>.*|\1|')" # Get URL of the .ics for the task
     curl -u "$user:$api_key" -X GET $TASK_URL > $root/mod_task.ics # Get only the task to modify
@@ -134,20 +157,20 @@ action_selector () {
     ACTION=$(echo -e "Progress status\nAdd or change status\nAdd a secondary task\nAdd or change due\nAdd or change priority\nRemove task" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Select the action to make")
     case "$ACTION" in
         "Progress status")
-            status_task walk
-            ;;
-        "Add or change status")
-            status_task change
+            mod_task walk
             ;;
         "Add a secondary task")
-            echo "On development" |  wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "See you soon with this feature"
-            exit 0
+            new_task secondary
+            ;;
+        "Add or change status")
+            mod_task status
             ;;
         "Add or change due")
-            echo "On development" |  wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "See you soon with this feature"
+            mod_task due
             exit 0
             ;;
         "Add or change priority")
+            mod_task prio
             echo "On development" |  wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "See you soon with this feature"
             exit 0
             ;;
@@ -158,8 +181,6 @@ action_selector () {
             echo "Something went wrong" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt ":("
             ;;
     esac
-    echo $ACTION
-    exit 0
 }
 
 ##### MAIN ######
@@ -189,6 +210,5 @@ if echo "$SELECTED_TASK" | grep -q "New Task"; then
 else
     action_selector
 fi
-
 
 exit 0
