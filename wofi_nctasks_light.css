@@ -1,5 +1,5 @@
 /*
-  Wofi Theme - Nextcloud Inspired (Dark Mode)
+  Wofi Theme - Nextcloud Inspired (Light Mode)
   All colors are directly inlined for simplicity.
 */
 
@@ -11,9 +11,9 @@
 
 /* Main Window Styling */
 #window {
-    background-color: #1e1e1e; /* Dark background */
-    color: #dfe6ec;            /* Light text */
-    border: 1px solid linear-gradient(to right, #2c9fb5, #b3acf2);
+    background-color: #b8b8b8; /* Light background */
+    color: #1d2d44;            /* Dark text */
+    border: 1px solid #f7b500; /* Nextcloud yellow accent border */
     border-radius: 10px;
     transition: all 0.2s ease-in-out;
 }
@@ -25,17 +25,17 @@
 
 /* Input Field Styling */
 #input {
-    background-color: #282f3e; /* Slightly lighter dark */
+    background-color: #8f969b; /* Light grey background */
     border: 1px solid transparent;
     padding: 8px 12px;
-    color: #dfe6ec;
+    color: #1d2d44; /* Dark text */
     border-radius: 4px;
     transition: border 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
 #input:focus {
-    border: 1px solid #2c9fb5;
-    background-color: #333b4a; /* Slightly lighter focus */
+    border: 1px solid #f7b500; /* Yellow accent on focus */
+    background-color: #8f969b; /* Slightly darker focus */
 }
 
 /* Scroll Area Margin */
@@ -51,12 +51,12 @@
 
 /* Text Colors */
 #text {
-    color: #dfe6ec; /* Light text */
+    color: #1d2d44; /* Dark text */
 }
 
 /* Selected Text Color */
 #text:selected {
-    color: #1e1e1e; /* Dark text on selected */
+    color: #f7f7f7; /* Light text on selected */
 }
 
 /* Entry Padding */
@@ -67,8 +67,8 @@
 
 /* Selected Entry Styling */
 #entry:selected {
-    background-color: #0082c9; /* Nextcloud blue */
-    color: #1e1e1e;            /* Dark text on blue */
+    background-color: #0082c9; /* Nextcloud primary blue */
+    color: #f7f7f7;            /* Light text on blue */
     border-radius: 4px;
     opacity: 1;
 }
