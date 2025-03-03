@@ -1,6 +1,7 @@
 # Nextcloud Tasks Desktop
 **Proof of concept.**<br />
 Visualizing take count of priority, due and parent-son relation.
+The entrypoint is cal_visualizer.sh.
 
 ## Roadmap
 - [x] New Task
@@ -10,7 +11,7 @@ Visualizing take count of priority, due and parent-son relation.
   - [x] Add/Change Due
   - [ ] Due Hour
   - [x] Add/Change Prio
+  - [x] Change Summary
   - [x] Add Secondary Tasks
 
-- [ ] Ncurses?
 - [ ] Clean Code (In Process)
