@@ -43,7 +43,6 @@ def get_ics_field(lines, field):
 
 ########### WALK
 def handle_walk():
-    """Walk logic - toggle STATUS between NEEDS-ACTION and IN-PROCESS, or delete the task."""
     lines = read_ics()
     pre_status = get_ics_field(lines, "STATUS")
     if pre_status == "NEEDS-ACTION":
@@ -127,19 +126,24 @@ def handle_due(value):
 
 ########### PRIO
 def handle_prio(value):
-    """Set PRIORITY"""
     priority_mapping = {
         "Low": "9",
         "Medium": "5",
         "High": "1"
     }
-    # Convert value to the corresponding priority
     priority = priority_mapping.get(value, None)
     if priority is None:
         priority = "9"
     lines = read_ics()
 
     updated_lines = set_ics_field(lines, "PRIORITY", priority)
+    write_ics(updated_lines)
+
+########### SUMMARY
+def handle_summary(value):
+    lines = read_ics()
+
+    updated_lines = set_ics_field(lines, "SUMMARY", value)
     write_ics(updated_lines)
 
 ########### DELETE
@@ -161,6 +165,9 @@ def main():
     elif action == "prio":
         if len(sys.argv) == 3:
             handle_prio(sys.argv[2])
+    elif action == "summary":
+        if len(sys.argv) == 3:
+            handle_summary(sys.argv[2])
     else:
         print(f"Unknown action: {action}")
         sys.exit(1)
