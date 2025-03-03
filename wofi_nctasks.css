@@ -1,4 +1,8 @@
-/* Global Text Settings */
+/*
+  Wofi Theme - Nextcloud Inspired (Dark Mode)
+  All colors are directly inlined for simplicity.
+*/
+
 * {
     font-family: "JetBrainsMono Nerd Font";
     font-size: 14px;
@@ -7,10 +11,11 @@
 
 /* Main Window Styling */
 #window {
-    background-color: #1e1e1e;
-    color: #dfe6ec;
+    background-color: #1e1e1e; /* Dark background */
+    color: #dfe6ec;            /* Light text */
     border: 1px solid linear-gradient(to right, #2c9fb5, #b3acf2);
     border-radius: 10px;
+    transition: all 0.2s ease-in-out;
 }
 
 /* Outer Box - Margin and Padding for Layout */
@@ -20,11 +25,17 @@
 
 /* Input Field Styling */
 #input {
-    background-color: #374f83;
-    border: 1px solid #2c9fb5;
+    background-color: #282f3e; /* Slightly lighter dark */
+    border: 1px solid transparent;
     padding: 8px 12px;
     color: #dfe6ec;
     border-radius: 4px;
+    transition: border 0.2s ease-in-out, background-color 0.2s ease-in-out;
+}
+
+#input:focus {
+    border: 1px solid #2c9fb5;
+    background-color: #333b4a; /* Slightly lighter focus */
 }
 
 /* Scroll Area Margin */
@@ -40,23 +51,26 @@
 
 /* Text Colors */
 #text {
-    color: #dfe6ec;
+    color: #dfe6ec; /* Light text */
 }
 
 /* Selected Text Color */
 #text:selected {
-    color: #1e1e1e;
+    color: #1e1e1e; /* Dark text on selected */
 }
 
 /* Entry Padding */
 #entry {
     padding: 6px;
+    transition: background-color 0.2s ease-in-out, opacity 0.2s ease-in-out;
 }
 
 /* Selected Entry Styling */
 #entry:selected {
-    background-color: #0082c9;
-    color: #1e1e1e;
+    background-color: #0082c9; /* Nextcloud blue */
+    color: #1e1e1e;            /* Dark text on blue */
+    border-radius: 4px;
+    opacity: 1;
 }
 
 /* Rounded Corners for Inputs and Selected Entries */
