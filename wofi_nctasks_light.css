@@ -1,0 +1,80 @@
+/*
+  Wofi Theme - Nextcloud Inspired (Light Mode)
+  All colors are directly inlined for simplicity.
+*/
+
+* {
+    font-family: "JetBrainsMono Nerd Font";
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* Main Window Styling */
+#window {
+    background-color: #b8b8b8; /* Light background */
+    color: #1d2d44;            /* Dark text */
+    border: 1px solid #f7b500; /* Nextcloud yellow accent border */
+    border-radius: 10px;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Outer Box - Margin and Padding for Layout */
+#outer-box {
+    padding: 20px;
+}
+
+/* Input Field Styling */
+#input {
+    background-color: #8f969b; /* Light grey background */
+    border: 1px solid transparent;
+    padding: 8px 12px;
+    color: #1d2d44; /* Dark text */
+    border-radius: 4px;
+    transition: border 0.2s ease-in-out, background-color 0.2s ease-in-out;
+}
+
+#input:focus {
+    border: 1px solid #f7b500; /* Yellow accent on focus */
+    background-color: #8f969b; /* Slightly darker focus */
+}
+
+/* Scroll Area Margin */
+#scroll {
+    margin-top: 20px;
+}
+
+/* Image Padding */
+#img {
+    padding-right: 8px;
+    padding-left: 12px;
+}
+
+/* Text Colors */
+#text {
+    color: #1d2d44; /* Dark text */
+}
+
+/* Selected Text Color */
+#text:selected {
+    color: #f7f7f7; /* Light text on selected */
+}
+
+/* Entry Padding */
+#entry {
+    padding: 6px;
+    transition: background-color 0.2s ease-in-out, opacity 0.2s ease-in-out;
+}
+
+/* Selected Entry Styling */
+#entry:selected {
+    background-color: #0082c9; /* Nextcloud primary blue */
+    color: #f7f7f7;            /* Light text on blue */
+    border-radius: 4px;
+    opacity: 1;
+}
+
+/* Rounded Corners for Inputs and Selected Entries */
+#input,
+#entry:selected {
+    border-radius: 4px;
+}
