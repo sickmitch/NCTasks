@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # source var
-source ~/.config/nctasks/.env
+source ~/.config/nctasksp/.env
 ##### !!!!! #####
 # need to assign $user $api_key $base_url $root if not using .env
 cal_url=$base_url/remote.php/dav/calendars/$user/personal
@@ -10,6 +10,9 @@ cal_url=$base_url/remote.php/dav/calendars/$user/personal
 rm ~/.cache/wofi-dmenu
 rm $root/tasks
 rm $root/*.ics
+
+wofi_cmd="wofi --height=400 --width=700 -n -s /home/$user/.config/nctasksp/wofi_nctasks.css --show=dmenu --prompt"
+wofi_cal_cmd="wofi --height=400 --width=700 --columns=7 -n -s /home/$user/.config/nctasksp/wofi_nctasks.css --show=dmenu --prompt"
 
 ### REUSABLE WOFIS
 wofi_cal() {
@@ -32,51 +35,44 @@ wofi_cal() {
             dates+=$'\n'
         fi
     done
-    echo "$dates" | wofi --height=400 --width=700 --columns=7 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Select due:"
+    echo "$dates" | $wofi_cal_cmd "Select date:"
 }
 wofi_status() {
     status="To Do\nIn Process"
-    echo -e "$status" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Select status:"
+    echo -e "$status" | $wofi_cmd "Select status:"
 }
 wofi_prio() {
     status="Low\nMedium\nHigh"
-    echo -e "$status" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Select priority:"
+    echo -e "$status" | $wofi_cmd "Select priority:"
 }
 
-### STATUS CHANGER
-status_task() {
-    echo $1
+### MOD TASK
+mod_task() {
     case "$1" in
         walk)
-            PRE_STATUS=$(grep STATUS $root/mod_task.ics | cut -d':' -f2) # Evaluate which status should be set
-            PRE_STATUS=$(echo $PRE_STATUS | tr -d '\r') # Remove carriage return character from PRE_STATUS
-            case "$PRE_STATUS" in # change status
-                NEEDS-ACTION)
-                    STATUS_TO_SET="IN-PROCESS"
-                    ;;
-                IN-PROCESS)
-                    delete_task
-                    ;;
-                *)
-                    STATUS_TO_SET="NEEDS-ACTION"  # Reset
-                    ;;
-            esac
-            sed -i "s/^STATUS:.*/STATUS:$STATUS_TO_SET/" $root/mod_task.ics # Mod the task
-            ;;
-        change)
-            STATUS_TO_SET=$(echo -e "To do\nIn Progress" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Select desired status")
-            if [ "$STATUS_TO_SET" = "To do" ]; then
-                STATUS_TO_SET="NEEDS-ACTION"
-            elif [ "$STATUS_TO_SET" = "In Progress" ]; then
-                STATUS_TO_SET="IN-PROCESS"
-            else
-                echo "Invalid status selected"
-                exit 1
+            python3 $root/mod_task.py walk
+            if [ $? == 4 ]; then
+                delete_task
             fi
-            sed -i "s/^STATUS:.*/STATUS:$STATUS_TO_SET/" $root/mod_task.ics # Mod the task
+            ;;
+        status)
+            STATUS_TO_SET=$(wofi_status)
+            python3 $root/mod_task.py status "$STATUS_TO_SET"
+            ;;
+        due)
+            DUE_TO_SET=$(wofi_cal)
+            python3 $root/mod_task.py due "$DUE_TO_SET"
+            ;;
+        prio)
+            PRIO_TO_SET=$(wofi_prio)
+            python3 $root/mod_task.py prio "$PRIO_TO_SET"
+            ;;
+        summary)
+            SUM_TO_SET=$(echo "Insert the new summary" | $wofi_cmd "Input new summary here")
+            python3 $root/mod_task.py summary "$SUM_TO_SET"
             ;;
         *)
-            echo "Something went wrong" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt ":("
+            echo "Something went wrong" | $wofi_cmd ":("
             ;;
     esac
     # Extract ETag from previous response (to handle concurrency)
@@ -96,7 +92,7 @@ delete_task(){
 
 ### NEW TASK
 new_task() {
-    new_task_sum=$(echo "Insert a name for the new task" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Input a name here")
+    new_task_sum=$(echo "Insert a name for the new task" | $wofi_cmd "Input a summary here")
     if [ -z "$new_task_sum" ] || [ "$new_task_sum" = "Insert a name for the new task" ]; then
         exit 0
     fi
@@ -112,9 +108,12 @@ new_task() {
     if [ -z "$new_task_status" ]; then
         exit 0
     fi
-
     # Generate the new task .ics file and get the unique ID to send it
-    new_task_uid=$(python3 $root/new_task.py "$new_task_sum" "$new_task_due" "$new_task_prio" "$new_task_status")
+    if [ "$1" = "secondary" ]; then
+        new_task_uid=$(python3 $root/new_task.py "$new_task_sum" "$new_task_due" "$new_task_prio" "$new_task_status" "$1" "$N")
+    else
+        new_task_uid=$(python3 $root/new_task.py "$new_task_sum" "$new_task_due" "$new_task_prio" "$new_task_status")
+    fi
     # Send it
     curl -v --user "$user:$api_key" \
     -H "Content-Type: text/calendar" -X PUT \
@@ -126,40 +125,40 @@ new_task() {
 action_selector () {
     # Get UID of selected task
     line_number=$(echo $SELECTED_TASK | sed 's/ [0-9][0-9].*$//' | grep -n -f - $root/tasks | cut -d: -f1) # Find the task from the summary
+    # echo $line_number
     N=$(awk -v line=$line_number 'NR<=line { if ($0 ~ /^UID:/) uid=$0 } END { if (uid) print uid }' $root/tasks | cut -d':' -f2) # Crawl up to find UID and assign to N
+    # echo $N
     ### N è Task UID
     TASK_URL="$base_url$(grep -B5 "$N" "$root/tasks" | grep "<d:href>" | sed -E 's|.*<d:href>(.*)</d:href>.*|\1|')" # Get URL of the .ics for the task
     curl -u "$user:$api_key" -X GET $TASK_URL > $root/mod_task.ics # Get only the task to modify
 
-    ACTION=$(echo -e "Progress status\nAdd or change status\nAdd a secondary task\nAdd or change due\nAdd or change priority\nRemove task" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Select the action to make")
+    ACTION=$(echo -e "Progress status\nAdd a secondary task\nAdd or change status\nAdd or change due\nAdd or change priority\nChange summary\nRemove task" | $wofi_cmd "Select the action to make")
     case "$ACTION" in
         "Progress status")
-            status_task walk
-            ;;
-        "Add or change status")
-            status_task change
+            mod_task walk
             ;;
         "Add a secondary task")
-            echo "On development" |  wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "See you soon with this feature"
-            exit 0
+            new_task secondary
+            ;;
+        "Add or change status")
+            mod_task status
             ;;
         "Add or change due")
-            echo "On development" |  wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "See you soon with this feature"
-            exit 0
+            mod_task due
             ;;
         "Add or change priority")
-            echo "On development" |  wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "See you soon with this feature"
-            exit 0
+            mod_task prio
+            ;;
+        "Change summary")
+            mod_task summary
             ;;
         "Remove task")
             delete_task
             ;;
         *)
-            echo "Something went wrong" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt ":("
+            echo "Something went wrong" | $wofi_cmd ":("
             ;;
     esac
-    echo $ACTION
-    exit 0
 }
 
 ##### MAIN ######
@@ -178,7 +177,7 @@ curl -v -u $user:$api_key -X PROPFIND \
 > $root/tasks
 
 # Visualize tasks into a Wofi menu
-SELECTED_TASK=$($root/cal_visualizer.py $root/tasks | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Select a task to change status, ESC to close")
+SELECTED_TASK=$($root/cal_visualizer.py $root/tasks | $wofi_cmd "Select a task to change status, ESC to close")
 if [ -z "$SELECTED_TASK" ]; then
     exit 0
 fi
@@ -189,6 +188,5 @@ if echo "$SELECTED_TASK" | grep -q "New Task"; then
 else
     action_selector
 fi
-
 
 exit 0
