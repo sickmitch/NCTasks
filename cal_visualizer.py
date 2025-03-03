@@ -153,7 +153,7 @@ def visualize_tasks(tasks):
 
     # Print footer
     footer = "{:<30}  {:<20}  {:<15}  {:<10}".format("Task", "Due", "Status", "Priority")
-    separator = "New Task.  " + "-" * (len(footer) - 15 ) 
+    separator = "New Task  " + "-" * (len(footer) - 15 ) 
     print(separator)
     print(footer)
 

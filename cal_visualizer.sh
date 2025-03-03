@@ -51,47 +51,18 @@ mod_task() {
             if [ $? == 4 ]; then
                 delete_task
             fi
-            # PRE_STATUS=$(grep STATUS $root/mod_task.ics | cut -d':' -f2) # Evaluate which status should be set
-            # PRE_STATUS=$(echo $PRE_STATUS | tr -d '\r') # Remove carriage return character from PRE_STATUS
-            # case "$PRE_STATUS" in # change status
-            #     NEEDS-ACTION)
-            #         STATUS_TO_SET="IN-PROCESS"
-            #         ;;
-            #     IN-PROCESS)
-            #         delete_task
-            #         ;;
-            #     *)
-            #         STATUS_TO_SET="NEEDS-ACTION"  # Reset
-            #         ;;
-            # esac
-            # sed -i "s/^STATUS:.*/STATUS:$STATUS_TO_SET/" $root/mod_task.ics # Mod the task
-            echo $?
             ;;
         status)
-            STATUS_TO_SET=$(echo -e "To do\nIn Progress" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Select desired status")
-            STATUS_TO_SET=$(echo "$STATUS_TO_SET" | tr ' ' '-')
+            STATUS_TO_SET=$(wofi_status)
             python3 $root/mod_task.py status "$STATUS_TO_SET"
-            # if [ "$STATUS_TO_SET" = "To do" ]; then
-            #     STATUS_TO_SET="NEEDS-ACTION"
-            # elif [ "$STATUS_TO_SET" = "In Progress" ]; then
-            #     STATUS_TO_SET="IN-PROCESS"
-            # else
-            #     echo "Invalid status selected"
-            #     exit 1
-            # fi
-            # sed -i "s/^STATUS:.*/STATUS:$STATUS_TO_SET/" $root/mod_task.ics # Mod the task
             ;;
         due)
             DUE_TO_SET=$(wofi_cal)
-            ## da finire
-            # python3 $root/mod_task.py due "$DUE_TO_SET"
-            exit 0
+            python3 $root/mod_task.py due "$DUE_TO_SET"
             ;;
         prio)
             PRIO_TO_SET=$(wofi_prio)
-            # python3 $root/mod_task.py prio "$PRIO_TO_SET"
-            ## da finire\
-            exit 0
+            python3 $root/mod_task.py prio "$PRIO_TO_SET"
             ;;
         *)
             echo "Something went wrong" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt ":("
@@ -154,7 +125,7 @@ action_selector () {
     TASK_URL="$base_url$(grep -B5 "$N" "$root/tasks" | grep "<d:href>" | sed -E 's|.*<d:href>(.*)</d:href>.*|\1|')" # Get URL of the .ics for the task
     curl -u "$user:$api_key" -X GET $TASK_URL > $root/mod_task.ics # Get only the task to modify
 
-    ACTION=$(echo -e "Progress status\nAdd or change status\nAdd a secondary task\nAdd or change due\nAdd or change priority\nRemove task" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Select the action to make")
+    ACTION=$(echo -e "Progress status\nAdd a secondary task\nAdd or change status\nAdd or change due\nAdd or change priority\nRemove task" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Select the action to make")
     case "$ACTION" in
         "Progress status")
             mod_task walk
@@ -167,12 +138,9 @@ action_selector () {
             ;;
         "Add or change due")
             mod_task due
-            exit 0
             ;;
         "Add or change priority")
             mod_task prio
-            echo "On development" |  wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "See you soon with this feature"
-            exit 0
             ;;
         "Remove task")
             delete_task

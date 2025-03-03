@@ -37,7 +37,7 @@ last_modified = get_current_timestamp()
 dtstamp = get_current_timestamp()
 
 # Read template path
-template_path = '/home/mike/.config/nctasks/new_task_templ'
+template_path = '/home/mike/.config/nctasksp/new_task_templ'
 
 try:
     with open(template_path, 'r') as file:
@@ -104,7 +104,7 @@ if len(sys.argv) >= 6 and sys.argv[5] == "secondary":
     template_lines.insert(-2, related_to_line)  # Insert before the second last line
 
 # Write to new file
-output_path = f'/home/mike/.config/nctasks/{uid}.ics'
+output_path = f'/home/mike/.config/nctasksp/{uid}.ics'
 with open(output_path, 'w') as file:
     file.writelines(template_lines)
 

@@ -2,9 +2,11 @@
 
 import sys
 import os
+from datetime import datetime
 
-ICS_FILE = os.path.expanduser("~/.config/nctasks/mod_task.ics")
+ICS_FILE = os.path.expanduser("~/.config/nctasksp/mod_task.ics")
 
+########### ICS OPERATIONS
 def read_ics():
     """Read the content of the ICS file, or return an empty list if file is missing."""
     if not os.path.exists(ICS_FILE):
@@ -39,11 +41,11 @@ def get_ics_field(lines, field):
             return line.split(":", 1)[1].strip()
     return None
 
+########### WALK
 def handle_walk():
     """Walk logic - toggle STATUS between NEEDS-ACTION and IN-PROCESS, or delete the task."""
     lines = read_ics()
     pre_status = get_ics_field(lines, "STATUS")
-
     if pre_status == "NEEDS-ACTION":
         status_to_set = "IN-PROCESS"
     elif pre_status == "IN-PROCESS":
@@ -55,38 +57,100 @@ def handle_walk():
     updated_lines = set_ics_field(lines, "STATUS", status_to_set)
     write_ics(updated_lines)
 
+########### STATUS
 def handle_status(value):
     """Directly set STATUS to the given value."""
     lines = read_ics()
-    if value == "To-do":
+    if value == "To Do":
         status_to_set = "NEEDS-ACTION"
-    elif value == "In-Progress":
+    elif value == "In Process":
         status_to_set = "IN-PROCESS"
 
     updated_lines = set_ics_field(lines, "STATUS", status_to_set)
     write_ics(updated_lines)
 
+########### DUE
 def handle_due(value):
-    """Set DUE date."""
+    """Set DUE date, replacing existing or inserting as 3rd from bottom if missing."""
+    italian_months = {
+        "gen": "Jan",
+        "feb": "Feb",
+        "mar": "Mar",
+        "apr": "Apr",
+        "mag": "May",
+        "giu": "Jun",
+        "lug": "Jul",
+        "ago": "Aug",
+        "set": "Sep",
+        "ott": "Oct",
+        "nov": "Nov",
+        "dic": "Dec"
+    }
     lines = read_ics()
-    updated_lines = set_ics_field(lines, "DUE", value)
+    due_date = value
+    # If due_date is valid (not None or 'none'), format it.
+    if due_date and due_date.lower() != 'none':
+        try:
+            day, month_ita = due_date.split()
+            month = italian_months.get(month_ita.lower(), month_ita)
+            
+            current_month = datetime.now().month
+            current_year = datetime.now().year
+            due_month = datetime.strptime(month, "%b").month
+            due_year = current_year if due_month >= current_month else current_year + 1
+            # Format to 'YYYYMMDDT235959'
+            due_date_formatted = datetime.strptime(f"{day} {month} {due_year}", "%d %b %Y").strftime('%Y%m%dT235959')
+        except ValueError:
+            print("Invalid due date format. Use '<day> <month>' or 'None'.")
+            sys.exit(1)
+    else:
+        due_date_formatted = None
+
+    updated_lines = []
+    due_found = False
+    # Process lines - replace DUE if found
+    for line in lines:
+        if line.startswith('DUE:'):
+            if due_date_formatted:
+                updated_lines.append(f'DUE:{due_date_formatted}\n')
+            due_found = True
+        else:
+            updated_lines.append(line)
+    # If DUE was not found and due_date is valid, insert it at 3rd from the bottom
+    if not due_found and due_date_formatted:
+        insert_position = max(0, len(updated_lines) - 2)  # 3rd from bottom
+        updated_lines.insert(insert_position, f'DUE:{due_date_formatted}\n')
+    # If due_date is None or 'none', remove existing DUE
+    if due_date_formatted is None:
+        updated_lines = [line for line in updated_lines if not line.startswith('DUE:')]
     write_ics(updated_lines)
 
+########### PRIO
 def handle_prio(value):
-    """Set PRIORITY."""
+    """Set PRIORITY"""
+    priority_mapping = {
+        "Low": "9",
+        "Medium": "5",
+        "High": "1"
+    }
+    # Convert value to the corresponding priority
+    priority = priority_mapping.get(value, None)
+    if priority is None:
+        priority = "9"
     lines = read_ics()
-    updated_lines = set_ics_field(lines, "PRIORITY", value)
+
+    updated_lines = set_ics_field(lines, "PRIORITY", priority)
     write_ics(updated_lines)
 
+########### DELETE
 def delete_task():
     sys.exit(4)
 
+########### MAIN
 def main():
-
     action = sys.argv[1]
-
+    print(action)
     if action == "walk":
-        print(len(sys.argv))
         handle_walk()
     elif action == "status":
         if len(sys.argv) == 3:
