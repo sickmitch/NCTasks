@@ -11,6 +11,9 @@ rm ~/.cache/wofi-dmenu
 rm $root/tasks
 rm $root/*.ics
 
+wofi_cmd="wofi --height=400 --width=700 -n -s /home/$user/.config/nctasksp/wofi_nctasks.css --show=dmenu --prompt"
+wofi_cal_cmd="wofi --height=400 --width=700 --columns=7 -n -s /home/$user/.config/nctasksp/wofi_nctasks.css --show=dmenu --prompt"
+
 ### REUSABLE WOFIS
 wofi_cal() {
     # Define start and end dates (GNU date is assumed)
@@ -32,18 +35,18 @@ wofi_cal() {
             dates+=$'\n'
         fi
     done
-    echo "$dates" | wofi --height=400 --width=700 --columns=7 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Select due:"
+    echo "$dates" | $wofi_cal_cmd "Select date:"
 }
 wofi_status() {
     status="To Do\nIn Process"
-    echo -e "$status" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Select status:"
+    echo -e "$status" | $wofi_cmd "Select status:"
 }
 wofi_prio() {
     status="Low\nMedium\nHigh"
-    echo -e "$status" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Select priority:"
+    echo -e "$status" | $wofi_cmd "Select priority:"
 }
 
-### STATUS CHANGER
+### MOD TASK
 mod_task() {
     case "$1" in
         walk)
@@ -64,8 +67,12 @@ mod_task() {
             PRIO_TO_SET=$(wofi_prio)
             python3 $root/mod_task.py prio "$PRIO_TO_SET"
             ;;
+        summary)
+            SUM_TO_SET=$(echo "Insert the new summary" | $wofi_cmd "Input new summary here")
+            python3 $root/mod_task.py summary "$SUM_TO_SET"
+            ;;
         *)
-            echo "Something went wrong" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt ":("
+            echo "Something went wrong" | $wofi_cmd ":("
             ;;
     esac
     # Extract ETag from previous response (to handle concurrency)
@@ -85,7 +92,7 @@ delete_task(){
 
 ### NEW TASK
 new_task() {
-    new_task_sum=$(echo "Insert a name for the new task" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Input a name here")
+    new_task_sum=$(echo "Insert a name for the new task" | $wofi_cmd "Input a summary here")
     if [ -z "$new_task_sum" ] || [ "$new_task_sum" = "Insert a name for the new task" ]; then
         exit 0
     fi
@@ -125,7 +132,7 @@ action_selector () {
     TASK_URL="$base_url$(grep -B5 "$N" "$root/tasks" | grep "<d:href>" | sed -E 's|.*<d:href>(.*)</d:href>.*|\1|')" # Get URL of the .ics for the task
     curl -u "$user:$api_key" -X GET $TASK_URL > $root/mod_task.ics # Get only the task to modify
 
-    ACTION=$(echo -e "Progress status\nAdd a secondary task\nAdd or change status\nAdd or change due\nAdd or change priority\nRemove task" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Select the action to make")
+    ACTION=$(echo -e "Progress status\nAdd a secondary task\nAdd or change status\nAdd or change due\nAdd or change priority\nChange summary\nRemove task" | $wofi_cmd "Select the action to make")
     case "$ACTION" in
         "Progress status")
             mod_task walk
@@ -142,11 +149,14 @@ action_selector () {
         "Add or change priority")
             mod_task prio
             ;;
+        "Change summary")
+            mod_task summary
+            ;;
         "Remove task")
             delete_task
             ;;
         *)
-            echo "Something went wrong" | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt ":("
+            echo "Something went wrong" | $wofi_cmd ":("
             ;;
     esac
 }
@@ -167,7 +177,7 @@ curl -v -u $user:$api_key -X PROPFIND \
 > $root/tasks
 
 # Visualize tasks into a Wofi menu
-SELECTED_TASK=$($root/cal_visualizer.py $root/tasks | wofi --height=400 --width=700 -n -s ~/.config/wofi/wofi.css --show=dmenu --prompt "Select a task to change status, ESC to close")
+SELECTED_TASK=$($root/cal_visualizer.py $root/tasks | $wofi_cmd "Select a task to change status, ESC to close")
 if [ -z "$SELECTED_TASK" ]; then
     exit 0
 fi

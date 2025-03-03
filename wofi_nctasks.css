@@ -1,0 +1,66 @@
+/* Global Text Settings */
+* {
+    font-family: "JetBrainsMono Nerd Font";
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* Main Window Styling */
+#window {
+    background-color: #1e1e1e;
+    color: #dfe6ec;
+    border: 1px solid linear-gradient(to right, #2c9fb5, #b3acf2);
+    border-radius: 10px;
+}
+
+/* Outer Box - Margin and Padding for Layout */
+#outer-box {
+    padding: 20px;
+}
+
+/* Input Field Styling */
+#input {
+    background-color: #374f83;
+    border: 1px solid #2c9fb5;
+    padding: 8px 12px;
+    color: #dfe6ec;
+    border-radius: 4px;
+}
+
+/* Scroll Area Margin */
+#scroll {
+    margin-top: 20px;
+}
+
+/* Image Padding */
+#img {
+    padding-right: 8px;
+    padding-left: 12px;
+}
+
+/* Text Colors */
+#text {
+    color: #dfe6ec;
+}
+
+/* Selected Text Color */
+#text:selected {
+    color: #1e1e1e;
+}
+
+/* Entry Padding */
+#entry {
+    padding: 6px;
+}
+
+/* Selected Entry Styling */
+#entry:selected {
+    background-color: #0082c9;
+    color: #1e1e1e;
+}
+
+/* Rounded Corners for Inputs and Selected Entries */
+#input,
+#entry:selected {
+    border-radius: 4px;
+}
