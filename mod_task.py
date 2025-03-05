@@ -4,7 +4,7 @@ import sys
 import os
 from datetime import datetime
 
-ICS_FILE = os.path.expanduser("~/.config/nctasksp/mod_task.ics")
+ICS_FILE = os.path.expanduser("~/.config/nctasks/mod_task.ics")
 
 ########### ICS OPERATIONS
 def read_ics():

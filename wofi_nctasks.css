@@ -1,12 +1,11 @@
 /*
   Wofi Theme - Nextcloud Inspired (Dark Mode)
-  All colors are directly inlined for simplicity.
 */
 
 * {
     font-family: "JetBrainsMono Nerd Font";
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 300;
 }
 
 /* Main Window Styling */
@@ -15,7 +14,7 @@
     color: #dfe6ec;            /* Light text */
     border: 1px solid linear-gradient(to right, #2c9fb5, #b3acf2);
     border-radius: 10px;
-    transition: all 0.2s ease-in-out;
+    transition: all 0.05s ease-in-out;
 }
 
 /* Outer Box - Margin and Padding for Layout */

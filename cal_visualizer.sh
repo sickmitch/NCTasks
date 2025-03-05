@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # source var
-source ~/.config/nctasksp/.env
+source ~/.config/nctasks/.env
 ##### !!!!! #####
 # need to assign $user $api_key $base_url $root if not using .env
 cal_url=$base_url/remote.php/dav/calendars/$user/personal
@@ -11,13 +11,13 @@ rm ~/.cache/wofi-dmenu
 rm $root/tasks
 rm $root/*.ics
 
-wofi_cmd="wofi --height=400 --width=700 -n -s /home/$user/.config/nctasksp/wofi_nctasks.css --show=dmenu --prompt"
-wofi_cal_cmd="wofi --height=400 --width=700 --columns=7 -n -s /home/$user/.config/nctasksp/wofi_nctasks.css --show=dmenu --prompt"
+wofi_cmd="wofi --height=400 --width=700 -n -s /home/$user/.config/nctasks/wofi_nctasks.css --show=dmenu --prompt"
+wofi_cal_cmd="wofi --height=400 --width=700 --columns=7 -n -s /home/$user/.config/nctasks/wofi_nctasks.css --show=dmenu --prompt"
 
 ### REUSABLE WOFIS
 wofi_cal() {
     # Define start and end dates (GNU date is assumed)
-    start=$(date +%Y-%m-%d)
+    start=$(date -d "tomorrow" +%Y-%m-%d)
     end=$(date -d "+2 months" +%Y-%m-%d)
     end_year=$(date -d "+2 months" +%Y)
     current_year=$(date -d "$current" +%Y)
@@ -25,7 +25,8 @@ wofi_cal() {
         end=$(date -d "next year" +%Y-%m-%d)
     fi
     current="$start"
-    dates="None"$'\n'
+    dates="$(for i in {0..6}; do date -d "yesterday +$i days" +%A; done)"
+    dates+=$'\n'"None"$'\n'"Today"$'\n'
     # Loop through each day until the end date
     while [ "$(date -d "$current" +%Y%m%d)" -le "$(date -d "$end" +%Y%m%d)" ]; do
         # Format each date as "DD MMM" (e.g. "05 Mar")
@@ -125,9 +126,7 @@ new_task() {
 action_selector () {
     # Get UID of selected task
     line_number=$(echo $SELECTED_TASK | sed 's/ [0-9][0-9].*$//' | grep -n -f - $root/tasks | cut -d: -f1) # Find the task from the summary
-    # echo $line_number
     N=$(awk -v line=$line_number 'NR<=line { if ($0 ~ /^UID:/) uid=$0 } END { if (uid) print uid }' $root/tasks | cut -d':' -f2) # Crawl up to find UID and assign to N
-    # echo $N
     ### N è Task UID
     TASK_URL="$base_url$(grep -B5 "$N" "$root/tasks" | grep "<d:href>" | sed -E 's|.*<d:href>(.*)</d:href>.*|\1|')" # Get URL of the .ics for the task
     curl -u "$user:$api_key" -X GET $TASK_URL > $root/mod_task.ics # Get only the task to modify
@@ -177,10 +176,13 @@ curl -v -u $user:$api_key -X PROPFIND \
 > $root/tasks
 
 # Visualize tasks into a Wofi menu
-SELECTED_TASK=$($root/cal_visualizer.py $root/tasks | $wofi_cmd "Select a task to change status, ESC to close")
+SELECTED_TASK=$($root/cal_visualizer.py $root/tasks | $wofi_cmd "Oggi è $(date +'%A %d %B')")
 if [ -z "$SELECTED_TASK" ]; then
     exit 0
 fi
+echo $SELECTED_TASK
+# add a command which takes $SELECTED_TASK and cuts the beginning of the string until it reaches an alphabet character
+SELECTED_TASK=$(echo "$SELECTED_TASK" | sed 's/^[^a-zA-Z]*//')
 
 # Grep into $SELECTED_TASK for the string "New Task" and pass a command if present
 if echo "$SELECTED_TASK" | grep -q "New Task"; then
@@ -188,5 +190,6 @@ if echo "$SELECTED_TASK" | grep -q "New Task"; then
 else
     action_selector
 fi
+
 
 exit 0

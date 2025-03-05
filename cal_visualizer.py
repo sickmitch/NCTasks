@@ -135,13 +135,22 @@ def visualize_tasks(tasks):
 
     # Function to print tasks recursively
     def print_task(task, indent_level=0):
-        indent = " " * 2 * indent_level  # ICONE QUI
+        indent = "󰳟  " * indent_level
         summary = indent + task.get('summary', 'N/A')
         due = task.get('due')
         status = task.get('status')
         priority = task.get('priority')
 
-        print(f"{summary:<30}  {due:<20}  {status:<15}  {priority:<10}")
+        if due == '00':
+            due_display = due
+        else:
+            # Append the day of the week to the date
+            due_date = datetime.strptime(due, "%d-%m-%Y")
+            # Change the format to display the day in Italian
+            italian_days = ['LUN', 'MAR', 'MER', 'GIO', 'VEN', 'SAB', 'DOM']
+            due_display = f"{due} {italian_days[due_date.weekday()]}"
+
+        print(f"{summary:<30}  {due_display:<20}  {status:<15}  {priority:<10}")
 
         # Print child tasks (if any)
         for child in parent_child_map.get(task['uid'], []):
@@ -153,7 +162,7 @@ def visualize_tasks(tasks):
 
     # Print footer
     footer = "{:<30}  {:<20}  {:<15}  {:<10}".format("Task", "Due", "Status", "Priority")
-    separator = "New Task  " + "-" * (len(footer) - 15 ) 
+    separator = "New Task  " + "-" * (len(footer) - 10 ) 
     print(separator)
     print(footer)
 
